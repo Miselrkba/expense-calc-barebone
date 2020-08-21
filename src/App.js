@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import uuid from "react-uuid";
 import "./App.css";
 import { Alert } from "./components/Alert";
 import { ExpenseForm } from "./components/ExpenseForm";
 import { ExpenseList } from "./components/ExpenseList";
 
-const initialExpenses = [
-  { id: uuid(), name: "car", amount: 1500 },
-  { id: uuid(), name: "rent", amount: 25 },
-  { id: uuid(), name: "food", amount: 220 },
-];
+// const initialExpenses = [
+//   { id: uuid(), charge: "car", amount: 1500 },
+//   { id: uuid(), charge: "rent", amount: 25 },
+//   { id: uuid(), charge: "food", amount: 220 },
+// ];
+
+const initialExpenses = localStorage.getItem("expenses")
+  ? JSON.parse(localStorage.getItem("expenses"))
+  : [];
 
 const App = () => {
   // set State
@@ -19,6 +23,12 @@ const App = () => {
   const [alert, setAlert] = useState({ show: false });
   const [edit, setEdit] = useState(false);
   const [id, setId] = useState(0);
+
+  //useEffect
+  useEffect(() => {
+   
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+  }, [expenses]);
 
   // set handle Functions
   const handleCharge = (e) => {
@@ -38,9 +48,9 @@ const App = () => {
     e.preventDefault();
     if (charge !== "" && amount > 0) {
       if (edit) {
-        let tempExpenses = expenses.map((item) =>
-          item.id === id ? { ...item, charge, amount } : item
-        );
+        let tempExpenses = expenses.map((item) => {
+          return item.id === id ? { ...item, charge, amount } : item;
+        });
         setExpenses(tempExpenses);
         setEdit(false);
         handleAlert({ type: "success", text: "item edited" });
@@ -48,11 +58,14 @@ const App = () => {
         const singleExpense = { id: uuid(), charge, amount };
         setExpenses([...expenses, singleExpense]);
         handleAlert({ type: "success", text: "item added" });
-        setCharge("");
-        setAmount("");
       }
+      setCharge("");
+      setAmount("");
     } else {
-      handleAlert({ type: "danger", text: "cant be empty or > 0" });
+      handleAlert({
+        type: "danger",
+        text: "cant be empty and value has to be > 0",
+      });
     }
   };
 
@@ -62,14 +75,14 @@ const App = () => {
   };
 
   const handleDelete = (id) => {
-    let tempExpenses = expenses.filter((item) => item.id === id);
+    let tempExpenses = expenses.filter((item) => item.id !== id);
     setExpenses(tempExpenses);
     handleAlert({ type: "danger", text: "item deleted" });
   };
 
   const handleEdit = (id) => {
     let expense = expenses.find((item) => item.id === id);
-    let [charge, amount] = expense;
+    let { charge, amount } = expense;
     setCharge(charge);
     setAmount(amount);
     setEdit(true);
@@ -96,8 +109,10 @@ const App = () => {
         clearItems={clearItems}
       />
       <h1>
-        total spending
+        total spending:
         <span>
+          {" "}
+          ${""}
           {expenses.reduce((acc, curr) => {
             return (acc += parseInt(curr.amount));
           }, 0)}
